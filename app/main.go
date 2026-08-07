@@ -19,8 +19,10 @@ func main() {
 		panic("Prompt must not be empty")
 	}
 
+	model := "google/gemini-3.1-flash-lite"
 	apiKey := os.Getenv("OPENROUTER_API_KEY")
 	baseUrl := os.Getenv("OPENROUTER_BASE_URL")
+
 	if baseUrl == "" {
 		baseUrl = "https://openrouter.ai/api/v1"
 	}
@@ -32,7 +34,7 @@ func main() {
 	client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseUrl))
 	resp, err := client.Chat.Completions.New(context.Background(),
 		openai.ChatCompletionNewParams{
-			Model: "anthropic/claude-haiku-4.5",
+			Model: model,
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				{
 					OfUser: &openai.ChatCompletionUserMessageParam{
