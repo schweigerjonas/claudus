@@ -1,5 +1,7 @@
 [![progress-banner](https://backend.codecrafters.io/progress/claude-code/dca240e6-346f-40a3-a931-95717ec92923)](https://app.codecrafters.io/users/schweigerjonas?r=2qF)
 
+_claudus (lat.): lahm, hinkend, gebrechlich_
+
 This is a starting point for Go solutions to the
 ["Build Your own Claude Code" Challenge](https://codecrafters.io/challenges/claude-code).
 
