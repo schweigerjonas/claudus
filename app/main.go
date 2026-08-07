@@ -19,7 +19,13 @@ func main() {
 		panic("Prompt must not be empty")
 	}
 
-	model := "google/gemini-3.1-flash-lite"
+	var model string
+	if os.Getenv("LOCAL") == "true" {
+		model = "google/gemini-3.1-flash-lite"
+	} else {
+		model = "anthropic/claude-haiku-4.5"
+	}
+
 	apiKey := os.Getenv("OPENROUTER_API_KEY")
 	baseUrl := os.Getenv("OPENROUTER_BASE_URL")
 
@@ -58,5 +64,5 @@ func main() {
 	fmt.Fprintln(os.Stderr, "Logs from your program will appear here!")
 
 	// TODO: Uncomment the line below to pass the first stage
-	// fmt.Print(resp.Choices[0].Message.Content)
+	fmt.Print(resp.Choices[0].Message.Content)
 }
