@@ -96,6 +96,7 @@ func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Fprintln(os.Stderr, "Logs from your program will appear here!")
 
+	// Agent Loop
 	if toolCalls := resp.Choices[0].Message.ToolCalls; toolCalls == nil {
 		fmt.Println(resp.Choices[0].Message.Content)
 	} else {
