@@ -29,8 +29,8 @@ func main() {
 	}
 
 	var model string
-	if os.Getenv("LOCAL") == "true" {
-		model = "google/gemini-3.1-flash-lite"
+	if os.Getenv("USE_PREFERRED") == "true" {
+		model = os.Getenv("PREFERRED_MODEL")
 	} else {
 		model = "anthropic/claude-haiku-4.5"
 	}
