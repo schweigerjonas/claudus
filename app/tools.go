@@ -9,32 +9,33 @@ import (
 	"github.com/openai/openai-go/v3"
 )
 
-func ExecuteTool(toolCall openai.ChatCompletionMessageToolCallUnion) {
-	if toolCall.Type != "function" {
-		panic("Custom tools not supported")
+func ExecuteTool(toolCall openai.ChatCompletionMessageToolCallUnionParam) string {
+	if toolType := *toolCall.GetType(); toolType != "function" {
+		fmt.Fprintf(os.Stderr, "tool type not support: %v\n", toolType)
 	}
 
-	switch toolCall.Function.Name {
+	switch toolCall.GetFunction().Name {
 	case "read_file":
-		ExecuteReadTool(toolCall)
+		return ExecuteReadTool(toolCall)
 	default:
-		fmt.Println("Requested tool not supported")
+		log.Fatalf("error: requested tool not supported\n")
 	}
+
+	return ""
 }
 
-func ExecuteReadTool(toolCall openai.ChatCompletionMessageToolCallUnion) {
-	// fmt.Printf("tool id:%v; type:%v; name:%v; arguments:%v", toolCall.ID, toolCall.Type, toolCall.Function.Name, toolCall.Function.Arguments)
+func ExecuteReadTool(toolCall openai.ChatCompletionMessageToolCallUnionParam) string {
 	var args ReadArguments // parsed args
-	jsonArgs := toolCall.Function.Arguments
+	jsonArgs := toolCall.GetFunction().Arguments
 
 	parseJsonArguments(jsonArgs, &args)
 
-	fileContent, err := os.ReadFile(args.FilePath)
+	content, err := os.ReadFile(args.FilePath)
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 	}
 
-	fmt.Println(string(fileContent))
+	return string(content)
 }
 
 func parseJsonArguments(jsonArgs string, args *ReadArguments) {

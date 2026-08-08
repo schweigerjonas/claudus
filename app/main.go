@@ -43,6 +43,8 @@ func main() {
 		panic("Env variable OPENROUTER_API_KEY not found")
 	}
 
+	// contains context for the model (all previously sent messages: prompts, responses, tool call
+	// content)
 	messages := []openai.ChatCompletionMessageParamUnion{
 		{
 			OfUser: &openai.ChatCompletionUserMessageParam{
@@ -76,29 +78,62 @@ func main() {
 	}
 
 	client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseUrl))
-	resp, err := client.Chat.Completions.New(context.Background(),
-		openai.ChatCompletionNewParams{
-			Model:     model,
-			MaxTokens: openai.Int(4096),
-			Messages:  messages,
-			Tools:     tools,
-		},
-	)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
-	if len(resp.Choices) == 0 {
-		panic("No choices in response")
+
+	// Agent loop
+	for {
+		res, err := client.Chat.Completions.New(context.Background(),
+			openai.ChatCompletionNewParams{
+				Model:     model,
+				MaxTokens: openai.Int(4096),
+				Messages:  messages,
+				Tools:     tools,
+			},
+		)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
+		if len(res.Choices) == 0 {
+			panic("No choices in response")
+		}
+
+		// You can use print statements as follows for debugging, they'll be visible when running tests.
+		// fmt.Fprintln(os.Stderr, "Logs from your program will appear here!")
+
+		// TODO: I feel like this is not the way to do this, I think there should be the option to
+		// basically have it as JSON, or rather a normal struct variable with strings, that then gets
+		// converted to the expected form of the API call
+		msg := openai.ChatCompletionMessageParamUnion{
+			OfAssistant: &openai.ChatCompletionAssistantMessageParam{
+				Content:   res.Choices[0].Message.ToAssistantMessageParam().Content,
+				ToolCalls: res.Choices[0].Message.ToAssistantMessageParam().ToolCalls,
+			},
+		}
+
+		messages = append(messages, msg)
+
+		var toolCalls []openai.ChatCompletionMessageToolCallUnionParam
+
+		if toolCalls = msg.OfAssistant.ToolCalls; toolCalls == nil {
+			fmt.Println(msg.OfAssistant.Content.OfString.Value)
+			break
+		}
+
+		for i := range len(toolCalls) {
+			content := ExecuteTool(toolCalls[i])
+
+			tool_msg := openai.ChatCompletionMessageParamUnion{
+				OfTool: &openai.ChatCompletionToolMessageParam{
+					ToolCallID: *toolCalls[i].GetID(),
+					Content: openai.ChatCompletionToolMessageParamContentUnion{
+						OfString: openai.String(content),
+					},
+				},
+			}
+
+			messages = append(messages, tool_msg)
+		}
 	}
 
-	// You can use print statements as follows for debugging, they'll be visible when running tests.
-	fmt.Fprintln(os.Stderr, "Logs from your program will appear here!")
-
-	// Agent Loop
-	if toolCalls := resp.Choices[0].Message.ToolCalls; toolCalls == nil {
-		fmt.Println(resp.Choices[0].Message.Content)
-	} else {
-		ExecuteTool(toolCalls[0])
-	}
+	os.Exit(0)
 }
