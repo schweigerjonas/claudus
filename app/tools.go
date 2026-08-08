@@ -11,8 +11,11 @@ func ExecuteTool(toolCall openai.ChatCompletionMessageToolCallUnion) {
 		panic("Custom tools not supported")
 	}
 
-	if toolCall.Function.Name == "read_file" {
+	switch toolCall.Function.Name {
+	case "read_file":
 		ExecuteReadTool(toolCall)
+	default:
+		fmt.Println("Requested tool not supported")
 	}
 }
 
