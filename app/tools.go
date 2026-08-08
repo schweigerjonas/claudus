@@ -29,7 +29,13 @@ func ExecuteReadTool(toolCall openai.ChatCompletionMessageToolCallUnion) {
 
 	parseJsonArguments(jsonArgs, &args)
 
-	fmt.Println(args)
+	fileContent, err := os.ReadFile(args.FilePath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(string(fileContent))
 }
 
 func parseJsonArguments(jsonArgs string, args *ReadArguments) {
@@ -44,7 +50,7 @@ func parseJsonArguments(jsonArgs string, args *ReadArguments) {
 
 	err := json.Unmarshal([]byte(jsonArgs), &args)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v", err)
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 }
