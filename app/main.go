@@ -8,7 +8,6 @@ import (
 
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
-	"github.com/openai/openai-go/v3/packages/param"
 
 	"github.com/joho/godotenv"
 )
@@ -44,14 +43,22 @@ func main() {
 		panic("Env variable OPENROUTER_API_KEY not found")
 	}
 
+	messages := []openai.ChatCompletionMessageParamUnion{
+		{
+			OfUser: &openai.ChatCompletionUserMessageParam{
+				Content: openai.ChatCompletionUserMessageParamContentUnion{
+					OfString: openai.String(prompt),
+				},
+			},
+		},
+	}
+
 	var tools = []openai.ChatCompletionToolUnionParam{
 		{
 			OfFunction: &openai.ChatCompletionFunctionToolParam{
 				Function: openai.FunctionDefinitionParam{
-					Name: "read_file",
-					Description: param.Opt[string]{
-						Value: "Read and return the contents of a file",
-					},
+					Name:        "read_file",
+					Description: openai.String("Read and return the contents of a file"),
 					Parameters: openai.FunctionParameters{
 						"type": "object",
 						"properties": map[string]any{
@@ -73,16 +80,8 @@ func main() {
 		openai.ChatCompletionNewParams{
 			Model:     model,
 			MaxTokens: openai.Int(4096),
-			Messages: []openai.ChatCompletionMessageParamUnion{
-				{
-					OfUser: &openai.ChatCompletionUserMessageParam{
-						Content: openai.ChatCompletionUserMessageParamContentUnion{
-							OfString: openai.String(prompt),
-						},
-					},
-				},
-			},
-			Tools: tools,
+			Messages:  messages,
+			Tools:     tools,
 		},
 	)
 	if err != nil {
