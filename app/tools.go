@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
-	"strings"
 
 	"github.com/openai/openai-go/v3"
 )
@@ -31,26 +31,15 @@ func ExecuteReadTool(toolCall openai.ChatCompletionMessageToolCallUnion) {
 
 	fileContent, err := os.ReadFile(args.FilePath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("error: %v\n", err)
 	}
 
 	fmt.Println(string(fileContent))
 }
 
 func parseJsonArguments(jsonArgs string, args *ReadArguments) {
-	/**
-	* format field file_path to be unmarshalled by json lib
-	* this field will always be present, since it is defined as required in the tool advertisement to
-	* he model
-	* in the case of "file_path" being part of the value of the field, this should not be a problem,
-	* since I only replace the first occurence
-	 */
-	jsonArgs = strings.Replace(jsonArgs, "file_path", "FilePath", 1)
-
 	err := json.Unmarshal([]byte(jsonArgs), &args)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("error: %v\n", err)
 	}
 }
