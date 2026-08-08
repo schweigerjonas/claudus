@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/openai/openai-go/v3"
@@ -15,10 +14,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file:", err)
-	}
+	godotenv.Load()
 
 	var prompt string
 	flag.StringVar(&prompt, "p", "", "Prompt to send to LLM")
@@ -29,8 +25,10 @@ func main() {
 	}
 
 	var model string
-	if os.Getenv("USE_PREFERRED") == "true" {
-		model = os.Getenv("PREFERRED_MODEL")
+	// when submitting, there is no access to .env files, so the default model provided by
+	// CodeCrafters will be used to run the tests
+	if os.Getenv("LOCAL") == "true" {
+		model = os.Getenv("LOCAL_MODEL")
 	} else {
 		model = "anthropic/claude-haiku-4.5"
 	}
