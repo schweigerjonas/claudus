@@ -4,13 +4,22 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
+	"github.com/openai/openai-go/v3/packages/param"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	var prompt string
 	flag.StringVar(&prompt, "p", "", "Prompt to send to LLM")
 	flag.Parse()
@@ -37,10 +46,35 @@ func main() {
 		panic("Env variable OPENROUTER_API_KEY not found")
 	}
 
+	var tools = []openai.ChatCompletionToolUnionParam{
+		{
+			OfFunction: &openai.ChatCompletionFunctionToolParam{
+				Function: openai.FunctionDefinitionParam{
+					Name: "read_file",
+					Description: param.Opt[string]{
+						Value: "Read and return the contents of a file",
+					},
+					Parameters: openai.FunctionParameters{
+						"type": "object",
+						"properties": map[string]any{
+							"file_path": map[string]string{
+								"type":        "string",
+								"description": "The path to the file to read",
+							},
+						},
+						"required": []string{"file_path"},
+					},
+				},
+				Type: "function",
+			},
+		},
+	}
+
 	client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseUrl))
 	resp, err := client.Chat.Completions.New(context.Background(),
 		openai.ChatCompletionNewParams{
-			Model: model,
+			Model:     model,
+			MaxTokens: openai.Int(4096),
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				{
 					OfUser: &openai.ChatCompletionUserMessageParam{
@@ -50,6 +84,7 @@ func main() {
 					},
 				},
 			},
+			Tools: tools,
 		},
 	)
 	if err != nil {
@@ -64,5 +99,5 @@ func main() {
 	fmt.Fprintln(os.Stderr, "Logs from your program will appear here!")
 
 	// TODO: Uncomment the line below to pass the first stage
-	fmt.Print(resp.Choices[0].Message.Content)
+	fmt.Println(resp.Choices[0].Message.Content)
 }
